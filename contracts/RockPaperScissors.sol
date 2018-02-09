@@ -91,7 +91,7 @@ contract RockPaperScissors {
       aliceBet = bet;
       aliceBetNonce = betNonce;
       LogBetNonceDeposited(alice);
-    } else if (msg.sender == bob) {
+    } else {
       require(bobBet == RpsBet.Null); // do not accept bet/nonce deposit for 2nd time
       bytes32 _bobBetHash = keccak256(this, bet, betNonce);
       require(_bobBetHash == bobBetHash);
