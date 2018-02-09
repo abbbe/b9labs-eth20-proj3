@@ -44,6 +44,7 @@ contract RockPaperScissors {
   event LogWaitingDepositBetNonce(address indexed player);
   event LogBetNonceDeposited(address indexed player);
   event LogOutcome(address indexed player, address otherPlayer, RpsBet yourBet, RpsBet otherBet, RpsOutcome outcome, uint256 yourReward);
+  // + event LogClaim
 
   function RockPaperScissors(uint256 _betAmount, address _alice, address _bob) public {
     require(_alice != 0);
@@ -149,11 +150,13 @@ contract RockPaperScissors {
       uint256 _aliceReward = aliceReward;
       aliceReward = 0;
       alice.transfer(_aliceReward);
+      // + LogClaim
     } else if (msg.sender == bob) {
       require(bobReward > 0);
       uint256 _bobReward = bobReward;
       bobReward = 0;
       bob.transfer(_bobReward);
+      // + LogClaim
     } else {
       revert();
     }
