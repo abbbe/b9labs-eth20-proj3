@@ -12,7 +12,7 @@ pragma solidity 0.4.18;
  * - bet nonce
  *
  * Player must not try depositing bet & nonce until another player deposited their hash.
- * Player must not use zero nonce. Player must not use nonce which results in zero hash.
+ * Player must not use nonce which results in zero hash (unlikely to happen anyway).
  *
  * If one player deposits hash/nonce and another does not, funds of the first player are frozen in the contract.
  * This can be solved by specifying a timeout after which the game gets canceled and players can withdraw their funds.
@@ -28,7 +28,7 @@ contract RockPaperScissors {
   bytes32 bobBetHash;
 
   // bet and nonce (if nonce is not-zero => bet&nonce deposided by player)
-  enum RpsBet { Rock, Paper, Scissors }
+  enum RpsBet { Null, Rock, Paper, Scissors }
   RpsBet aliceBet;
   RpsBet bobBet;
   uint256 aliceBetNonce;
@@ -83,17 +83,16 @@ contract RockPaperScissors {
 
     require(msg.sender == alice || msg.sender == bob);
     require(bet == RpsBet.Rock || bet == RpsBet.Paper || bet == RpsBet.Scissors);
-    require(betNonce != 0);
 
     if (msg.sender == alice) {
-      require(aliceBetNonce == 0); // do not accept bet/nonce deposit for 2nd time
+      require(aliceBet == RpsBet.Null); // do not accept bet/nonce deposit for 2nd time
       bytes32 _aliceBetHash = keccak256(this, bet, betNonce);
       require(_aliceBetHash == aliceBetHash);
       aliceBet = bet;
       aliceBetNonce = betNonce;
       LogBetNonceDeposited(alice);
     } else if (msg.sender == bob) {
-      require(bobBetNonce == 0); // do not accept bet/nonce deposit for 2nd time
+      require(bobBet == RpsBet.Null); // do not accept bet/nonce deposit for 2nd time
       bytes32 _bobBetHash = keccak256(this, bet, betNonce);
       require(_bobBetHash == bobBetHash);
       bobBet = bet;
@@ -101,7 +100,7 @@ contract RockPaperScissors {
       LogBetNonceDeposited(bob);
     }
 
-    if (aliceBetNonce != 0 && bobBetNonce != 0) {
+    if (aliceBet != RpsBet.Null && bobBet != RpsBet.Null) {
       calculateRewards();
     }
   }
