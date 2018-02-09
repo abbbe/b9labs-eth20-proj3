@@ -15,7 +15,7 @@ pragma solidity 0.4.18;
  * Player must not use nonce which results in zero hash (unlikely to happen anyway).
  *
  * If one player deposits hash/nonce and another does not, funds of the first player are frozen in the contract.
- * This can be solved by specifying a timeout after which the game gets canceled and players can withdraw their funds.
+ * This can be solved by specifying a timeout after which the game gets cancelled gracefully.
  */
 
 contract RockPaperScissors {
