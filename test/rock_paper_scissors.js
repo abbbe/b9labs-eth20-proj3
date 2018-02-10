@@ -40,6 +40,8 @@ contract('RockPaperScissors', function (accounts) {
 
   it("should do hashing right");
 
+  it("should do reward calculation right");
+
   it("should reject direct transaction with value", function () {
     return expectedException(
       () => rps.sendTransaction({ from: alice, value: 1, gas: 3000000 }),
@@ -135,7 +137,7 @@ contract('RockPaperScissors', function (accounts) {
     describe("again", function () {
 
       beforeEach("new from bob", function () {
-        console.log("**** newChallenge - bob ***")
+        // console.log("**** newChallenge - bob ***")
         return rps.newChallenge(bobBetHash, 172800, { from: bob, value: 1001, gas: 3000000 });
       });
 
@@ -202,7 +204,7 @@ contract('RockPaperScissors', function (accounts) {
 
     describe("accept challenge", function () {
       beforeEach("new from alice", function () {
-        console.log("**** newChallenge - alice ***")
+        // console.log("**** newChallenge - alice ***")
         return rps.newChallenge(aliceBetHash, 172800, { from: alice, value: 1234, gas: 3000000 });
       });
 
@@ -224,7 +226,7 @@ contract('RockPaperScissors', function (accounts) {
 
       describe("deposit bet/nonce", function () {
         beforeEach("accept from bob", function () {
-          console.log("**** acceptChallenge - bob ***")
+          // console.log("**** acceptChallenge - bob ***")
           return rps.acceptChallenge(aliceBetHash, bobBetHash, { from: bob, value: 1234 });
         });
 
