@@ -279,7 +279,12 @@ contract('RockPaperScissors', function (accounts) {
 
         it("should emit additional event if both players submitted valid bet/nonce");
 
-        it("should reject bet/nonce from bob 2nd time");
+        it("should reject bet/nonce from bob 2nd time", function () {
+          return rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob })
+            .then(() => expectedException(
+              () => rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob })
+            ));
+        });
 
         it("should reject withdrawal before timeout");
 
