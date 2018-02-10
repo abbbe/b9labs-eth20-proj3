@@ -168,9 +168,9 @@ contract('RockPaperScissors', function (accounts) {
       });
 
       it("should keep Weis in contract on second deposit with different hash", function () {
-        return rps.newChallenge(bobBetHash2, 172800, { from: bob, value: 1001, gas: 3000000 })
+        return rps.newChallenge(bobBetHash2, 172800, { from: bob, value: 2002, gas: 3000000 })
           .then(txObject => web3.eth.getBalancePromise(rps.address))
-          .then(balance => assert.strictEqual(balance.toString(10), "2002"));
+          .then(balance => assert.strictEqual(balance.toString(10), "3003"));
       });
 
       it("should update games[] on second deposit with different hash", function () {
