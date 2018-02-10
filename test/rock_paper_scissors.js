@@ -38,9 +38,7 @@ contract('RockPaperScissors', function (accounts) {
       .then(_instance => rps = _instance);
   });
 
-  it("should do hashing right");
-
-  it("should do reward calculation right");
+  it("should do rewards calculation right");
 
   it("should reject direct transaction with value", function () {
     return expectedException(
