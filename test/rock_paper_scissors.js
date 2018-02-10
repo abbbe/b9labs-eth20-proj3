@@ -1,7 +1,7 @@
 Promise = require("bluebird");
 
 const expectedException = require("../utils/expectedException.js");
-const sequentialPromise = require("../utils/sequentialPromise.js");
+// const sequentialPromise = require("../utils/sequentialPromise.js");
 web3.eth.makeSureHasAtLeast = require("../utils/makeSureHasAtLeast.js");
 web3.eth.makeSureAreUnlocked = require("../utils/makeSureAreUnlocked.js");
 web3.eth.getTransactionReceiptMined = require("../utils/getTransactionReceiptMined.js");
