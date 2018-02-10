@@ -37,6 +37,8 @@ contract RockPaperScissors {
     bytes32 aliceBetNonce;
     RpsBet bobBet;
     bytes32 bobBetNonce;
+    uint256 aliceReward;
+    uint256 bobReward;
   }
 
   mapping (bytes32 => Game) public games;
@@ -44,6 +46,7 @@ contract RockPaperScissors {
   event LogChallenge(address indexed alice, bytes32 indexed aliceBetHash, uint amount, uint lastMatchBlock);
   event LogChallengeAccepted(bytes32 indexed aliceBetHash, address indexed bob, bytes32 bobBetHash);
   event LogBetNonce(bytes32 indexed aliceBetHash, address player, RpsBet bet, bytes32 betNonce);
+  event LogRewards(bytes32 indexed aliceBetHash, uint256 aliceReward, uint256 bobReward);
 
   function hashThat(RpsBet bet, bytes32 betNonce)
     pure public
@@ -115,47 +118,45 @@ contract RockPaperScissors {
     }
 
     if (game.aliceBet != RpsBet.Null && game.bobBet != RpsBet.Null) {
-      // calculateRewards(games);
+      (game.aliceReward, game.bobReward) = calculateRewards(game.aliceBet, game.bobBet, game.amount);
+      LogRewards(aliceBetHash, game.aliceReward, game.bobReward);
     }
   }
 
-  // function calculateRewards() private {
+  function calculateRewards(RpsBet aliceBet, RpsBet bobBet, uint256 betAmount) public pure returns (uint256 aliceReward, uint256 bobReward) {
   //   RpsOutcome aliceOutcome;
   //   RpsOutcome bobOutcome;
 
-  //   // we have everything to figure out who won
-  //   if (aliceBet == bobBet) {
-  //     // tie
-  //     aliceReward = betAmount;
-  //     bobReward = betAmount;
-  //     aliceOutcome = RpsOutcome.TIE;
-  //     bobOutcome = RpsOutcome.TIE;
-  //   } else {
-  //     bool aliceWon = true;
-  //     if (aliceBet == RpsBet.Rock && bobBet == RpsBet.Paper) {
-  //       aliceWon = false;
-  //     } else if (aliceBet == RpsBet.Scissors && bobBet == RpsBet.Rock) {
-  //       aliceWon = false;
-  //     } else if (aliceBet == RpsBet.Paper && bobBet == RpsBet.Scissors) {
-  //       aliceWon = false;
-  //     } // else - Alice won
+    // we have everything to figure out who won
+    if (aliceBet == bobBet) {
+      // tie
+      aliceReward = betAmount;
+      bobReward = betAmount;
+      // aliceOutcome = RpsOutcome.TIE;
+      // bobOutcome = RpsOutcome.TIE;
+    } else {
+      bool aliceWon = true;
+      if (aliceBet == RpsBet.Rock && bobBet == RpsBet.Paper) {
+        aliceWon = false;
+      } else if (aliceBet == RpsBet.Scissors && bobBet == RpsBet.Rock) {
+        aliceWon = false;
+      } else if (aliceBet == RpsBet.Paper && bobBet == RpsBet.Scissors) {
+        aliceWon = false;
+      } // else - Alice won
 
-  //     if (aliceWon) {
-  //       aliceOutcome = RpsOutcome.WON;
-  //       bobOutcome = RpsOutcome.LOST;
-  //       aliceReward = 2 * betAmount;
-  //       bobReward = 0;
-  //     } else {
-  //       aliceOutcome = RpsOutcome.LOST;
-  //       bobOutcome = RpsOutcome.WON;
-  //       aliceReward = 0;
-  //       bobReward = 2 * betAmount;
-  //     }
-  //   }
-
-  //   LogOutcome(alice, bob, aliceBet, bobBet, aliceOutcome, aliceReward);
-  //   LogOutcome(bob, alice, bobBet, aliceBet, bobOutcome, bobReward);
-  // }
+      if (aliceWon) {
+        // aliceOutcome = RpsOutcome.WON;
+        // bobOutcome = RpsOutcome.LOST;
+        aliceReward = 2 * betAmount;
+        bobReward = 0;
+      } else {
+        // aliceOutcome = RpsOutcome.LOST;
+        // bobOutcome = RpsOutcome.WON;
+        aliceReward = 0;
+        bobReward = 2 * betAmount;
+      }
+    }
+  }
 
   // function claim() public {
   //   if (msg.sender == alice) {

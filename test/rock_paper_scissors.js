@@ -101,8 +101,8 @@ contract('RockPaperScissors', function (accounts) {
     it("should consume 86k gas", function () {
       return rps.newChallenge(aliceBetHash, 172800, { from: alice, value: 1, gas: 3000000 })
         .then(txObject => {
-          assert.isAtLeast(txObject.receipt.gasUsed, "86700");
-          assert.isAtMost(txObject.receipt.gasUsed, "86900");
+          assert.isAtLeast(txObject.receipt.gasUsed, "86000");
+          assert.isAtMost(txObject.receipt.gasUsed, "88000");
         });
     });
 
@@ -277,7 +277,22 @@ contract('RockPaperScissors', function (accounts) {
           });
         });
 
-        it("should emit additional event if both players submitted valid bet/nonce");
+        it("should emit additional event if both players submitted valid bet/nonce", function () {
+          return rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice })
+            .then(() => rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob }))
+            .then(txObject => {
+              assert.strictEqual(txObject.logs.length, 2);
+              assert.strictEqual(txObject.logs[0].event, "LogBetNonce");
+              assert.strictEqual(txObject.logs[0].args.aliceBetHash, aliceBetHash, 'hash mismatch');
+              assert.strictEqual(txObject.logs[0].args.player, bob, 'player address mismatch');
+              assert.strictEqual(txObject.logs[0].args.bet.toString(), bobBet.toString(), 'bet mismatch');
+              assert.strictEqual(txObject.logs[0].args.betNonce, bobBetNonce, 'nonce mismatch');
+              assert.strictEqual(txObject.logs[1].event, "LogRewards");
+              assert.strictEqual(txObject.logs[1].args.aliceBetHash, aliceBetHash, 'hash mismatch');
+              assert.strictEqual(txObject.logs[1].args.aliceReward.toString(10), '0', 'aliceReward mismatch');
+              assert.strictEqual(txObject.logs[1].args.bobReward.toString(10), '2468', 'bobReward mismatch');
+            });
+        });
 
         it("should reject bet/nonce from bob 2nd time", function () {
           return rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob })
