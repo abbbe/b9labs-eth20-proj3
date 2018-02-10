@@ -33,6 +33,7 @@ contract('RockPaperScissors', function (accounts) {
   });
 
   beforeEach("deploy new RockPaperScissors", function () {
+    console.log("**** redeployed ***")
     return RockPaperScissors.new()
       .then(_instance => rps = _instance);
   });
@@ -55,6 +56,7 @@ contract('RockPaperScissors', function (accounts) {
     let aliceBetHash, bobBetHash, bobBetHash2;
 
     beforeEach("reset the hashes", function () {
+      console.log("**** reset the hashes ***")
       return rps.hashThat(aliceBet, aliceBetNonce)
         .then(_aliceBetHash => aliceBetHash = _aliceBetHash)
         .then(() => rps.hashThat(bobBet, bobBetNonce))
@@ -133,6 +135,7 @@ contract('RockPaperScissors', function (accounts) {
     describe("again", function () {
 
       beforeEach("new from bob", function () {
+        console.log("**** newChallenge - bob ***")
         return rps.newChallenge(bobBetHash, 172800, { from: bob, value: 1001, gas: 3000000 });
       });
 
@@ -192,10 +195,14 @@ contract('RockPaperScissors', function (accounts) {
               })
             ));
       });
+
+      it("should reject withdrawal before timeout");
+      it("should allow withdrawal after timeout");
     });
 
     describe("accept challenge", function () {
       beforeEach("new from alice", function () {
+        console.log("**** newChallenge - alice ***")
         return rps.newChallenge(aliceBetHash, 172800, { from: alice, value: 1234, gas: 3000000 });
       });
 
@@ -212,10 +219,59 @@ contract('RockPaperScissors', function (accounts) {
       });
 
       it("should accept matched amount", function () {
-        return rps.acceptChallenge(aliceBetHash, bobBetHash, { from: bob, value: 1234 })
-          .then(txHash => depositTxHash = txHash);
+        return rps.acceptChallenge(aliceBetHash, bobBetHash, { from: bob, value: 1234 });
+      });
+
+      describe("deposit bet/nonce", function () {
+        beforeEach("accept from bob", function () {
+          console.log("**** acceptChallenge - bob ***")
+          return rps.acceptChallenge(aliceBetHash, bobBetHash, { from: bob, value: 1234 });
+        });
+
+        it("should reject valid bet/nonce from other people");
+        it("should reject invalid bet/nonce");
+
+        it("should accept valid bet/nonce from alice", function () {
+          return rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice });
+        });
+
+        it("should emit a single event on accepting valid bet/nonce from alice");
+
+        it("should reject bet/nonce from alice 2nd time");
+
+        it("should accept valid bet/nonce from bob", function () {
+          return rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob });
+        });
+
+        it("should emit a single event on accepting valid bet/nonce from bob");
+
+        it("should emit additional event if both players submitted valid bet/nonce");
+
+        it("should reject bet/nonce from bob 2nd time");
+
+        it("should reject withdrawal before timeout");
+
+        it("should allow withdrawal after timeout");
+
+        describe("reward", function () {
+          beforeEach("accept from bob", function () {
+            console.log("**** depositBetNonce - alice ***");
+            console.log("**** depositBetNonce - bob ***");
+            return rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice })
+              .then(() => rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob }));
+          });
+
+          it("should reject claim from 3rd party");
+
+          it("should reject claim from alice-the-looser");
+
+          it("should honor claim from bob-the-winner");
+
+          it("should emit a single event on bob's claim");
+
+          it("should reject repeated claim from bob-the-winner");
+        });
       });
     });
-
   })
 });

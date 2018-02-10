@@ -33,14 +33,19 @@ contract RockPaperScissors {
     uint lastMatchBlock;
     address bob;
     bytes32 bobBetHash;
+    RpsBet aliceBet;
+    bytes32 aliceBetNonce;
+    RpsBet bobBet;
+    bytes32 bobBetNonce;
   }
 
   mapping (bytes32 => Game) public games;
 
   event LogChallenge(address indexed alice, bytes32 indexed aliceBetHash, uint amount, uint lastMatchBlock);
   event LogChallengeAccepted(bytes32 indexed aliceBetHash, address indexed bob, bytes32 bobBetHash);
+  event LogBetNonce(bytes32 indexed aliceBetHash, address player, RpsBet bet, bytes32 betNonce);
 
-  function hashThat(bytes32 bet, bytes32 betNonce)
+  function hashThat(RpsBet bet, bytes32 betNonce)
     pure public
     returns(bytes32 hash)
   {
@@ -74,83 +79,45 @@ contract RockPaperScissors {
     LogChallengeAccepted(aliceBetHash, msg.sender, bobBetHash);
   }
 
-  // // bet and nonce (if nonce is not-zero => bet&nonce deposided by player)
-  // RpsBet aliceBet;
-  // RpsBet bobBet;
-  // uint256 aliceBetNonce;
-  // uint256 bobBetNonce;
-
   // uint256 aliceReward;
   // uint256 bobReward;
 
   // enum RpsOutcome { TIE, WON, LOST }
 
-  // event LogWaitingDepositHash(address indexed player, uint256 amount);
-  // event LogHashDeposited(address indexed player);
-  // event LogWaitingDepositBetNonce(address indexed player);
-  // event LogBetNonceDeposited(address indexed player);
   // event LogOutcome(address indexed player, address otherPlayer, RpsBet yourBet, RpsBet otherBet, RpsOutcome outcome, uint256 yourReward);
   // // + event LogClaim
 
-  // function RockPaperScissors(uint256 _betAmount, address _alice, address _bob) public {
-  //   require(_alice != 0);
-  //   require(_bob != 0);
-  //   betAmount = _betAmount;
-  //   alice = _alice;
-  //   bob = _bob;
+  function depositBetNonce(bytes32 aliceBetHash, RpsBet bet, bytes32 betNonce) public {
+    Game storage game = games[aliceBetHash];
 
-  //   LogWaitingDepositHash(alice, betAmount);
-  //   LogWaitingDepositHash(bob, betAmount);
-  // }
+    // do not accept bet/nonce deposit until both players submitted their hashes
+    require(game.bobBetHash != 0);
 
-  // function depositBetHash(bytes32 betHash) public payable {
-  //   require(msg.sender == alice || msg.sender == bob);
-  //   require(msg.value == betAmount); // exact amount please, we don't have change, sorry
+    // only accept bet/nonce from alice and bob
+    require(msg.sender == game.alice || msg.sender == game.bob);
 
-  //   if (msg.sender == alice) {
-  //     require(aliceBetHash == 0); // do not accept hash deposit for 2nd time
-  //     aliceBetHash = betHash;
-  //     LogHashDeposited(alice);
-  //   } else if (msg.sender == bob) {
-  //     require(bobBetHash == 0); // do not accept hash deposit for 2nd time
-  //     bobBetHash = betHash;
-  //     LogHashDeposited(bob);
-  //   }
+    // make sure valid bet value, calculate hash
+    require(bet == RpsBet.Rock || bet == RpsBet.Paper || bet == RpsBet.Scissors);
+    bytes32 _betHash = hashThat(bet, betNonce);
 
-  //   if (aliceBetHash != 0 && bobBetHash != 0) {
-  //     LogWaitingDepositBetNonce(alice);
-  //     LogWaitingDepositBetNonce(bob);
-  //   }
-  // }
+    if (msg.sender == game.alice) {
+      require(game.aliceBet == RpsBet.Null); // do not accept bet/nonce deposit for 2nd time
+      require(aliceBetHash == _betHash); // hash must match
+      game.aliceBet = bet;
+      game.aliceBetNonce = betNonce;
+      LogBetNonce(aliceBetHash, game.alice, bet, betNonce);
+    } else {
+      require(game.bobBet == RpsBet.Null); // do not accept bet/nonce deposit for 2nd time
+      require(game.bobBetHash == _betHash); // hash must match
+      game.bobBet = bet;
+      game.bobBetNonce = betNonce;
+      LogBetNonce(aliceBetHash, game.bob, bet, betNonce);
+    }
 
-  // function depositBetNonce(RpsBet bet, uint256 betNonce) public {
-  //   // do not accept bet/nonce deposit until both players deposited their hashes
-  //   require(aliceBetHash != 0);
-  //   require(bobBetHash != 0);
-
-  //   require(msg.sender == alice || msg.sender == bob);
-  //   require(bet == RpsBet.Rock || bet == RpsBet.Paper || bet == RpsBet.Scissors);
-
-  //   if (msg.sender == alice) {
-  //     require(aliceBet == RpsBet.Null); // do not accept bet/nonce deposit for 2nd time
-  //     bytes32 _aliceBetHash = keccak256(this, bet, betNonce);
-  //     require(_aliceBetHash == aliceBetHash);
-  //     aliceBet = bet;
-  //     aliceBetNonce = betNonce;
-  //     LogBetNonceDeposited(alice);
-  //   } else {
-  //     require(bobBet == RpsBet.Null); // do not accept bet/nonce deposit for 2nd time
-  //     bytes32 _bobBetHash = keccak256(this, bet, betNonce);
-  //     require(_bobBetHash == bobBetHash);
-  //     bobBet = bet;
-  //     bobBetNonce = betNonce;
-  //     LogBetNonceDeposited(bob);
-  //   }
-
-  //   if (aliceBet != RpsBet.Null && bobBet != RpsBet.Null) {
-  //     calculateRewards();
-  //   }
-  // }
+    if (game.aliceBet != RpsBet.Null && game.bobBet != RpsBet.Null) {
+      // calculateRewards(games);
+    }
+  }
 
   // function calculateRewards() private {
   //   RpsOutcome aliceOutcome;
