@@ -31,11 +31,14 @@ contract RockPaperScissors {
     address alice;
     uint amount;
     uint lastMatchBlock;
+    address bob;
+    bytes32 bobBetHash;
   }
 
   mapping (bytes32 => Game) public games;
 
   event LogChallenge(address indexed alice, bytes32 indexed aliceBetHash, uint amount, uint lastMatchBlock);
+  event LogChallengeAccepted(bytes32 indexed aliceBetHash, address indexed bob, bytes32 bobBetHash);
 
   function hashThat(bytes32 bet, bytes32 betNonce)
     pure public
@@ -60,13 +63,16 @@ contract RockPaperScissors {
     LogChallenge(msg.sender, betHash, msg.value, lastMatchBlock);
   }
 
-  // uint256 betAmount;
-  // address alice;
-  // address bob;
+  function acceptChallenge(bytes32 aliceBetHash, bytes32 bobBetHash) public payable {
+    Game storage game = games[aliceBetHash];
+    require(msg.sender != game.alice); // can't play with yourself
+    require(msg.value == game.amount); // exact amount please, we don't have change, sorry
+    require(game.bob == 0); // can't accept challenge which was accepted already
 
-  // // hash (if hash non-zero => hash&funds deposited by player)
-  // bytes32 aliceBetHash;
-  // bytes32 bobBetHash;
+    game.bob = msg.sender;
+    game.bobBetHash = bobBetHash;
+    LogChallengeAccepted(aliceBetHash, msg.sender, bobBetHash);
+  }
 
   // // bet and nonce (if nonce is not-zero => bet&nonce deposided by player)
   // RpsBet aliceBet;

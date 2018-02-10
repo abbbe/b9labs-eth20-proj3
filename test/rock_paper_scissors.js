@@ -14,11 +14,11 @@ var RockPaperScissors = artifacts.require("./RockPaperScissors.sol");
 var RpsBet = Object.freeze({ "Null": 0, "Rock": 1, "Paper": 2, "Scissors": 3 })
 
 contract('RockPaperScissors', function (accounts) {
-  const aliceBet = RpsBet.Rock; 
+  const aliceBet = RpsBet.Rock;
   const aliceBetNonce = "0x1111111111111111111111111111111111111111";
-  const bobBet = RpsBet.Paper; 
+  const bobBet = RpsBet.Paper;
   const bobBetNonce = "0x2222222222222222222222222222222222222222";
-  const bobBet2 = RpsBet.Scissors; 
+  const bobBet2 = RpsBet.Scissors;
   const bobBetNonce2 = "0x3333333333333333333333333333333333333333";
   const address0 = "0x0000000000000000000000000000000000000000";
   let rps, alice, bob, carol;
@@ -38,7 +38,7 @@ contract('RockPaperScissors', function (accounts) {
   });
 
   it("should do hashing right");
-  
+
   it("should reject direct transaction with value", function () {
     return expectedException(
       () => rps.sendTransaction({ from: alice, value: 1, gas: 3000000 }),
@@ -132,7 +132,7 @@ contract('RockPaperScissors', function (accounts) {
 
     describe("again", function () {
 
-      beforeEach("accept for bob", function () {
+      beforeEach("new from bob", function () {
         return rps.newChallenge(bobBetHash, 172800, { from: bob, value: 1001, gas: 3000000 });
       });
 
@@ -193,5 +193,29 @@ contract('RockPaperScissors', function (accounts) {
             ));
       });
     });
+
+    describe("accept challenge", function () {
+      beforeEach("new from alice", function () {
+        return rps.newChallenge(aliceBetHash, 172800, { from: alice, value: 1234, gas: 3000000 });
+      });
+
+      it("should reject mismatched amount", function () {
+        return expectedException(
+          () => rps.acceptChallenge(aliceBetHash, bobBetHash, { from: bob, value: 4321 }),
+          3000000);
+      });
+
+      it("should reject alice even with matching amount", function () {
+        return expectedException(
+          () => rps.acceptChallenge(aliceBetHash, bobBetHash, { from: alice, value: 1234 }),
+          3000000);
+      });
+
+      it("should accept matched amount", function () {
+        return rps.acceptChallenge(aliceBetHash, bobBetHash, { from: bob, value: 1234 })
+          .then(txHash => depositTxHash = txHash);
+      });
+    });
+
   })
 });
