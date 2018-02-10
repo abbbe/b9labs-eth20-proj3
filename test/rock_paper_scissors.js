@@ -317,7 +317,16 @@ contract('RockPaperScissors', function (accounts) {
 
           it("should reject claim from alice-the-looser");
 
-          it("should honor claim from bob-the-winner");
+          it("should transfer reward by demand of bob-the-winner", function () {
+            let balance0;
+            return web3.eth.getBalancePromise(rps.address)
+              .then(_balance => {
+                balance0 = _balance;
+                return rps.claim(aliceBetHash, { from: bob });
+              })
+              .then(txObject => web3.eth.getBalancePromise(rps.address))
+              .then(balance => assert.strictEqual(balance.minus(balance0).toString(10), "-2468"));
+          });
 
           it("should emit a single event on bob's claim");
 

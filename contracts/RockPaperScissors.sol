@@ -158,21 +158,22 @@ contract RockPaperScissors {
     }
   }
 
-  // function claim() public {
-  //   if (msg.sender == alice) {
-  //     require(aliceReward > 0);
-  //     uint256 _aliceReward = aliceReward;
-  //     aliceReward = 0;
-  //     alice.transfer(_aliceReward);
-  //     // + LogClaim
-  //   } else if (msg.sender == bob) {
-  //     require(bobReward > 0);
-  //     uint256 _bobReward = bobReward;
-  //     bobReward = 0;
-  //     bob.transfer(_bobReward);
-  //     // + LogClaim
-  //   } else {
-  //     revert();
-  //   }
-  // }
+  function claim(bytes32 aliceBetHash) public {
+    Game storage game = games[aliceBetHash];
+    uint256 reward;
+
+    if (msg.sender == game.alice) {
+      require(game.aliceReward > 0);
+      reward = game.aliceReward;
+      game.aliceReward = 0;
+    } else if (msg.sender == game.bob) {
+      require(game.bobReward > 0);
+      reward = game.bobReward;
+      game.bobReward = 0;
+    } else {
+      revert();
+    }
+
+    msg.sender.transfer(reward);
+  }
 }
