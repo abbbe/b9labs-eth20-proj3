@@ -17,10 +17,49 @@ pragma solidity ^0.4.18;
  *
  * Player must not try depositing bet & nonce until another player deposited their hash.
  * Player must not use nonce which results in zero hash (unlikely to happen anyway).
+ * Player must not reuse nonce (or opponent can recover bet from results of an old game).
  *
  */
 
 contract RockPaperScissors {
+  uint constant ONE_DAY_OF_BLOCKS = 86400 / 15;         // 5,760
+  uint constant ONE_YEAR_OF_BLOCKS = 30 * 86400 / 15;   // 172,800
+
+  enum RpsBet { Null, Rock, Paper, Scissors }
+
+  struct Game {
+    address alice;
+    uint amount;
+    uint lastMatchBlock;
+  }
+
+  mapping (bytes32 => Game) public games;
+
+  event LogChallenge(address indexed alice, bytes32 indexed aliceBetHash, uint amount, uint lastMatchBlock);
+
+  function hashThat(bytes32 bet, bytes32 betNonce)
+    pure public
+    returns(bytes32 hash)
+  {
+    return keccak256(bet, betNonce);
+  }
+
+  function newChallenge(bytes32 betHash, uint timeout) public payable {
+    require(msg.value > 0);
+    require(timeout >= ONE_DAY_OF_BLOCKS);
+    require(timeout <= ONE_YEAR_OF_BLOCKS);
+
+    Game storage game = games[betHash];
+    require(game.alice == 0);
+
+    uint lastMatchBlock = block.number + timeout;
+    game.alice = msg.sender;
+    game.amount = msg.value;
+    game.lastMatchBlock = lastMatchBlock;
+
+    LogChallenge(msg.sender, betHash, msg.value, lastMatchBlock);
+  }
+
   // uint256 betAmount;
   // address alice;
   // address bob;
@@ -30,7 +69,6 @@ contract RockPaperScissors {
   // bytes32 bobBetHash;
 
   // // bet and nonce (if nonce is not-zero => bet&nonce deposided by player)
-  // enum RpsBet { Null, Rock, Paper, Scissors }
   // RpsBet aliceBet;
   // RpsBet bobBet;
   // uint256 aliceBetNonce;
