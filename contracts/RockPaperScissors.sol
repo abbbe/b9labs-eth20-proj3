@@ -56,6 +56,12 @@ contract RockPaperScissors {
     return keccak256(bet, betNonce);
   }
 
+  /*
+   * Alice calls newChallenge() to start the game. Bob is expected to take it by calling acceptChallenge().
+   *   - betHash    = Alice's hash, serves as game ID for other methods.
+   *   - timeout    = Time (in blocks) Bob has accept Alice's challenge.
+   *   - msg.value  = Amount to bet. Bob must match it when calling acceptChallenge().
+   */
   function newChallenge(bytes32 betHash, uint timeout) public payable {
     require(msg.value > 0);
     require(timeout >= ONE_DAY_OF_BLOCKS);
@@ -72,6 +78,11 @@ contract RockPaperScissors {
     LogChallenge(msg.sender, betHash, msg.value, lastMatchBlock);
   }
 
+  /*
+   * Bob calls acceptChallenge() to accept Alice's game.
+   *   - aliceBetHash  = hash of Alice's game
+   *   - bobBetHash    = Bob's hash
+   */
   function acceptChallenge(bytes32 aliceBetHash, bytes32 bobBetHash) public payable {
     Game storage game = games[aliceBetHash];
     require(msg.sender != game.alice); // can't play with yourself
@@ -83,14 +94,10 @@ contract RockPaperScissors {
     LogChallengeAccepted(aliceBetHash, msg.sender, bobBetHash);
   }
 
-  // uint256 aliceReward;
-  // uint256 bobReward;
-
-  // enum RpsOutcome { TIE, WON, LOST }
-
-  // event LogOutcome(address indexed player, address otherPlayer, RpsBet yourBet, RpsBet otherBet, RpsOutcome outcome, uint256 yourReward);
-  // // + event LogClaim
-
+  /*
+   * Alice and Bob call depositBetNonce() to deposit their bets and nonces.
+   * After one player calls this method, another player must do the same before timeout or loose.
+   */
   function depositBetNonce(bytes32 aliceBetHash, RpsBet bet, bytes32 betNonce) public {
     Game storage game = games[aliceBetHash];
 
@@ -119,22 +126,17 @@ contract RockPaperScissors {
     }
 
     if (game.aliceBet != RpsBet.Null && game.bobBet != RpsBet.Null) {
-      (game.aliceReward, game.bobReward) = calculateRewards(game.aliceBet, game.bobBet, game.amount);
+      (game.aliceReward, game.bobReward) = _calculateRewards(game.aliceBet, game.bobBet, game.amount);
       LogRewards(aliceBetHash, game.aliceReward, game.bobReward);
     }
   }
 
-  function calculateRewards(RpsBet aliceBet, RpsBet bobBet, uint256 betAmount) public pure returns (uint256 aliceReward, uint256 bobReward) {
-  //   RpsOutcome aliceOutcome;
-  //   RpsOutcome bobOutcome;
-
+  function _calculateRewards(RpsBet aliceBet, RpsBet bobBet, uint256 betAmount) public pure returns (uint256 aliceReward, uint256 bobReward) {
     // we have everything to figure out who won
     if (aliceBet == bobBet) {
       // tie
       aliceReward = betAmount;
       bobReward = betAmount;
-      // aliceOutcome = RpsOutcome.TIE;
-      // bobOutcome = RpsOutcome.TIE;
     } else {
       bool aliceWon = true;
       if (aliceBet == RpsBet.Rock && bobBet == RpsBet.Paper) {
@@ -146,19 +148,18 @@ contract RockPaperScissors {
       } // else - Alice won
 
       if (aliceWon) {
-        // aliceOutcome = RpsOutcome.WON;
-        // bobOutcome = RpsOutcome.LOST;
         aliceReward = 2 * betAmount;
         bobReward = 0;
       } else {
-        // aliceOutcome = RpsOutcome.LOST;
-        // bobOutcome = RpsOutcome.WON;
         aliceReward = 0;
         bobReward = 2 * betAmount;
       }
     }
   }
 
+  /*
+   * Winning player must call claim() to get their reward.
+   */
   function claim(bytes32 aliceBetHash) public {
     Game storage game = games[aliceBetHash];
     uint256 reward;
