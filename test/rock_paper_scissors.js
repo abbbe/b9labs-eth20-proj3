@@ -33,7 +33,7 @@ contract('RockPaperScissors', function (accounts) {
   });
 
   beforeEach("deploy new RockPaperScissors", function () {
-    console.log("**** redeployed ***")
+    // console.log("**** redeployed ***")
     return RockPaperScissors.new()
       .then(_instance => rps = _instance);
   });
@@ -56,7 +56,7 @@ contract('RockPaperScissors', function (accounts) {
     let aliceBetHash, bobBetHash, bobBetHash2;
 
     beforeEach("reset the hashes", function () {
-      console.log("**** reset the hashes ***")
+      // console.log("**** reset the hashes ***")
       return rps.hashThat(aliceBet, aliceBetNonce)
         .then(_aliceBetHash => aliceBetHash = _aliceBetHash)
         .then(() => rps.hashThat(bobBet, bobBetNonce))
@@ -297,8 +297,8 @@ contract('RockPaperScissors', function (accounts) {
         it("should reject bet/nonce from bob 2nd time", function () {
           return rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob })
             .then(() => expectedException(
-              () => rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob })
-            ));
+              () => rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob, gas: 3000000 }),
+              3000000));
         });
 
         it("should reject withdrawal before timeout");
@@ -307,17 +307,25 @@ contract('RockPaperScissors', function (accounts) {
 
         describe("reward", function () {
           beforeEach("accept from bob", function () {
-            console.log("**** depositBetNonce - alice ***");
-            console.log("**** depositBetNonce - bob ***");
+            // console.log("**** depositBetNonce - alice ***");
+            // console.log("**** depositBetNonce - bob ***");
             return rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice })
               .then(() => rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob }));
           });
 
-          it("should reject claim from 3rd party");
+          it("should reject claim from carol - 3rd party", function () {
+            return expectedException(
+              () => rps.claim(aliceBetHash, { from: carol }),
+              3000000);
+          });
 
-          it("should reject claim from alice-the-looser");
+          it("should reject claim from alice - the looser", function () {
+            return expectedException(
+              () => rps.claim(aliceBetHash, { from: alice }),
+              3000000);
+          });
 
-          it("should transfer reward by demand of bob-the-winner", function () {
+          it("should transfer reward by demand of bob - the winner", function () {
             let balance0;
             return web3.eth.getBalancePromise(rps.address)
               .then(_balance => {
@@ -330,7 +338,12 @@ contract('RockPaperScissors', function (accounts) {
 
           it("should emit a single event on bob's claim");
 
-          it("should reject repeated claim from bob-the-winner");
+          it("should reject 2nd claim from bob", function () {
+            return rps.claim(aliceBetHash, { from: bob })
+              .then(() => expectedException(
+                () => rps.claim(aliceBetHash, { from: bob }),
+                3000000));
+          });
         });
       });
     });
