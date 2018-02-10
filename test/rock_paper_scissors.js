@@ -336,7 +336,16 @@ contract('RockPaperScissors', function (accounts) {
               .then(balance => assert.strictEqual(balance.minus(balance0).toString(10), "-2468"));
           });
 
-          it("should emit a single event on bob's claim");
+          it("should emit a single event on bob's claim", function () {
+            return rps.claim(aliceBetHash, { from: bob })
+              .then(txObject => {
+                assert.strictEqual(txObject.logs.length, 1);
+                assert.strictEqual(txObject.logs[0].event, "LogClaim");
+                assert.strictEqual(txObject.logs[0].args.aliceBetHash, aliceBetHash, 'hash mismatch');
+                assert.strictEqual(txObject.logs[0].args.player, bob, 'player address mismatch');
+                assert.strictEqual(txObject.logs[0].args.amount.toString(), '2468', 'amount mismatch');
+              });
+          });
 
           it("should reject 2nd claim from bob", function () {
             return rps.claim(aliceBetHash, { from: bob })

@@ -47,6 +47,7 @@ contract RockPaperScissors {
   event LogChallengeAccepted(bytes32 indexed aliceBetHash, address indexed bob, bytes32 bobBetHash);
   event LogBetNonce(bytes32 indexed aliceBetHash, address player, RpsBet bet, bytes32 betNonce);
   event LogRewards(bytes32 indexed aliceBetHash, uint256 aliceReward, uint256 bobReward);
+  event LogClaim(bytes32 indexed aliceBetHash, address player, uint256 amount);
 
   function hashThat(RpsBet bet, bytes32 betNonce)
     pure public
@@ -174,6 +175,7 @@ contract RockPaperScissors {
       revert();
     }
 
+    LogClaim(aliceBetHash, msg.sender, reward);
     msg.sender.transfer(reward);
   }
 }
