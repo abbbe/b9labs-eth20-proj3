@@ -15,11 +15,11 @@ var RpsBet = Object.freeze({ "Null": 0, "Rock": 1, "Paper": 2, "Scissors": 3 })
 
 contract('RockPaperScissors', function (accounts) {
   const aliceBet = RpsBet.Rock;
-  const aliceBetNonce = "0x1111111111111111111111111111111111111111";
+  const aliceBetNonce = "0x1111111111111111111111111111111111111111111111111111111111111111";
   const bobBet = RpsBet.Paper;
-  const bobBetNonce = "0x2222222222222222222222222222222222222222";
+  const bobBetNonce = "0x2222222222222222222222222222222222222222222222222222222222222222";
   const bobBet2 = RpsBet.Scissors;
-  const bobBetNonce2 = "0x3333333333333333333333333333333333333333";
+  const bobBetNonce2 = "0x3333333333333333333333333333333333333333333333333333333333333333";
   const address0 = "0x0000000000000000000000000000000000000000";
   let rps, alice, bob, carol;
 
@@ -228,22 +228,54 @@ contract('RockPaperScissors', function (accounts) {
           return rps.acceptChallenge(aliceBetHash, bobBetHash, { from: bob, value: 1234 });
         });
 
-        it("should reject valid bet/nonce from other people");
-        it("should reject invalid bet/nonce");
+        it("should reject valid bet/nonce from other people", function () {
+          return expectedException(
+            () => rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: carol }),
+            3000000);
+        });
+
+        it("should reject invalid bet/nonce", function () {
+          return expectedException(
+            () => rps.depositBetNonce(aliceBetHash, bobBet2, bobBetNonce, { from: bob }),
+            3000000);
+        });
 
         it("should accept valid bet/nonce from alice", function () {
           return rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice });
         });
 
-        it("should emit a single event on accepting valid bet/nonce from alice");
+        it("should emit a single event on accepting valid bet/nonce from alice", function () {
+          return rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice }).then(txObject => {
+            assert.strictEqual(txObject.logs.length, 1);
+            assert.strictEqual(txObject.logs[0].event, "LogBetNonce");
+            assert.strictEqual(txObject.logs[0].args.aliceBetHash, aliceBetHash, 'hash mismatch');
+            assert.strictEqual(txObject.logs[0].args.player, alice, 'player address mismatch');
+            assert.strictEqual(txObject.logs[0].args.bet.toString(), aliceBet.toString(), 'bet mismatch');
+            assert.strictEqual(txObject.logs[0].args.betNonce, aliceBetNonce, 'nonce mismatch');
+          });
+        });
 
-        it("should reject bet/nonce from alice 2nd time");
+        it("should reject bet/nonce from alice 2nd time", function () {
+          return rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice })
+            .then(() => expectedException(
+              () => rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice })
+            ));
+        });
 
         it("should accept valid bet/nonce from bob", function () {
           return rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob });
         });
 
-        it("should emit a single event on accepting valid bet/nonce from bob");
+        it("should emit a single event on accepting valid bet/nonce from bob", function () {
+          return rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob }).then(txObject => {
+            assert.strictEqual(txObject.logs.length, 1);
+            assert.strictEqual(txObject.logs[0].event, "LogBetNonce");
+            assert.strictEqual(txObject.logs[0].args.aliceBetHash, aliceBetHash, 'hash mismatch');
+            assert.strictEqual(txObject.logs[0].args.player, bob, 'player address mismatch');
+            assert.strictEqual(txObject.logs[0].args.bet.toString(), bobBet.toString(), 'bet mismatch');
+            assert.strictEqual(txObject.logs[0].args.betNonce, bobBetNonce, 'nonce mismatch');
+          });
+        });
 
         it("should emit additional event if both players submitted valid bet/nonce");
 
