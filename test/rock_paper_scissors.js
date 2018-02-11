@@ -119,17 +119,17 @@ contract('RockPaperScissors', function (accounts) {
           assert.strictEqual(amount.toString(10), "0");
           assert.strictEqual(lastMatchBlock.toString(10), "0");
         })
-        .then(() => rps.newChallenge(aliceBetHash, 172800, { from: alice, value: 1001, gas: 3000000 })
-          .then(txObject => rps.games(aliceBetHash)
-            .then(([sender, amount, lastMatchBlock]) => {
-              assert.strictEqual(sender, alice);
-              assert.strictEqual(amount.toString(10), "1001");
-              // FIXME assert.strictEqual(lastMatchBlock.toString(10), "0");
-              assert.strictEqual(
-                lastMatchBlock.toString(10),
-                web3.toBigNumber(172800).plus(txObject.receipt.blockNumber).toString(10));
-            })
-          ));
+        .then(() => rps.newChallenge(aliceBetHash, 172800, { from: alice, value: 1001, gas: 3000000 }))
+        .then(txObject => rps.games(aliceBetHash)
+          .then(([sender, amount, lastMatchBlock]) => {
+            assert.strictEqual(sender, alice);
+            assert.strictEqual(amount.toString(10), "1001");
+            // FIXME assert.strictEqual(lastMatchBlock.toString(10), "0");
+            assert.strictEqual(
+              lastMatchBlock.toString(10),
+              web3.toBigNumber(172800).plus(txObject.receipt.blockNumber).toString(10));
+          })
+        );
     });
 
     describe("again", function () {
