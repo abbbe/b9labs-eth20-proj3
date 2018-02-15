@@ -231,23 +231,23 @@ contract('RockPaperScissors', function (accounts) {
           );
       });
 
-      it("should reject withdrawal before timeout", function () {
+      it("should reject claim before timeout", function () {
         return increaseTime(ONE_DAY)
           .then(() => expectedException(
-            () => rps.withdraw(bobBetHash, { from: bob, gas: 3000000 }),
+            () => rps.claim(bobBetHash, { from: bob, gas: 3000000 }),
             3000000));
       });
 
-      it("should allow 1st player withdraw after timeout", function () {
+      it("should allow 1st player to claim after timeout", function () {
         return increaseTime(ONE_DAY + 1)
-          .then(() => measure.measureTx([rps.address, bob], rps.withdraw(bobBetHash, { from: bob })))
+          .then(() => measure.measureTx([rps.address, bob], rps.claim(bobBetHash, { from: bob })))
           .then(m => measure.assertStrs10Equal(m.diff, [-1001, -m.cost + 1001]));
       });
 
-      it("should reject withdraw by others even after timeout", function () {
+      it("should reject claim by others even after timeout", function () {
         return increaseTime(ONE_DAY + 1)
           .then(() => expectedException(
-            () => rps.withdraw(bobBetHash, { from: alice, gas: 3000000 }),
+            () => rps.claim(bobBetHash, { from: alice, gas: 3000000 }),
             3000000));
       });
     });
@@ -357,8 +357,6 @@ contract('RockPaperScissors', function (accounts) {
             });
         });
 
-       // console.log(bob); for(;;);
-
         it("should reject bet/nonce from bob 2nd time", function () {
           return rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob })
             .then(txObject => assert.strictEqual(txObject.receipt.status, 1))
@@ -367,16 +365,16 @@ contract('RockPaperScissors', function (accounts) {
               3000000));
         });
 
-        [ONE_DAY, (ONE_DAY + 1)].forEach(elapsed => {
-          [alice, bob].forEach(who => {
-            it(`should reject withdraw if nobody revealed their bet (elapsed=${elapsed}, who=${who})`, function () {
-              return increaseTime(ONE_DAY + 1)
-                .then(() => expectedException(
-                  () => rps.withdraw(bobBetHash, { from: who, gas: 3000000 }),
-                  3000000));
-            });
-          })
-        });
+        // [ONE_DAY, (ONE_DAY + 1)].forEach(elapsed => {
+        //   [alice, bob].forEach(who => {
+        //     it(`should reject claim if nobody revealed their bet (elapsed=${elapsed}, who=${who})`, function () {
+        //       return increaseTime(ONE_DAY + 1)
+        //         .then(() => expectedException(
+        //           () => rps.claim(bobBetHash, { from: who, gas: 3000000 }),
+        //           3000000));
+        //     });
+        //   })
+        // });
 
         // describe("timeout", function () {
         //   it("should reject withdrawal before timeout", function () {

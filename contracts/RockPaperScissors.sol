@@ -30,8 +30,8 @@ contract RockPaperScissors {
 
   struct Game {
     address alice;
-    uint amount; // bet amount per player, reset to zero after withdraw/claim
-    uint deadline;
+    uint amount; // bet amount per player
+    uint deadline; // set on newChallenge(), reset to now + 1 week on acceptChallenge(), zeroed after rewards are assigned
     address bob;
     bytes32 bobBetHash;
     RpsBet aliceBet;
@@ -161,40 +161,40 @@ contract RockPaperScissors {
 
     game.aliceReward = aliceReward;
     game.bobReward = bobReward;
+    game.deadline = 0;
     LogRewards(aliceBetHash, aliceReward, bobReward);
   }
 
   /*
-   * Alice calls this function to get her money back if her challenge was not accepted.
-   */
-  function withdraw(bytes32 aliceBetHash) external {
-    Game storage game = games[aliceBetHash];
-    uint256 amount = game.amount;
-    require(amount > 0);
-    require(block.timestamp > game.deadline);
-
-    if (msg.sender == game.alice && game.bob == 0) {
-      // challenge has expired, bob has not accepted, let alice withdraw everything
-    } else if (msg.sender == game.alice && game.aliceBet != RpsBet.Null && game.bobBet == RpsBet.Null) {
-      // bob has failed to revel his bet, let alice withdraw everything
-    } else if (msg.sender == game.bob && game.bobBet != RpsBet.Null && game.aliceBet == RpsBet.Null) {
-      // alice has failed to revel his bet, let bob withdraw everything
-    } else {
-      revert();
-    }
-
-    game.amount = 0;
-    LogWithdraw(aliceBetHash, msg.sender, amount);
-    msg.sender.transfer(amount);
-  }
-
-  /*
-   * Winning player must call claim() to get their reward.
+   * Players must call claim() to get their reward.
    */
   function claim(bytes32 aliceBetHash) external {
     Game storage game = games[aliceBetHash];
-    uint256 reward;
 
+    if (block.timestamp > game.deadline && game.deadline != 0) {
+      // deadline has passed, one or both bets were not revealed (otherwise .deadline would be zeroed)
+
+      if (game.bob == 0) {
+        // challenge has expired, bob has not accepted, let alice withdraw her funds
+        game.aliceReward = game.amount;
+      } else if (game.aliceBet != RpsBet.Null && game.bobBet == RpsBet.Null) {
+        // bob has failed to reveal his bet, let alice withdraw everything
+        game.aliceReward = 2 * game.amount;
+      } else if (game.bobBet != RpsBet.Null && game.aliceBet == RpsBet.Null) {
+        // alice has failed to revel her bet, let bob withdraw everything
+        game.bobReward = 2 * game.amount;
+      } else if (game.aliceBet == RpsBet.Null && game.bobBet == RpsBet.Null) {
+        // both players have failed to reveal their bets, let both withdraw their funds
+        game.aliceReward = game.bobReward = game.amount;
+      } else {
+        revert(); // should never happen
+      }
+      game.deadline = 0;
+    }
+
+    // by now players' rewards are settled
+
+    uint256 reward;
     if (msg.sender == game.alice) {
       reward = game.aliceReward;
       require(reward > 0);
