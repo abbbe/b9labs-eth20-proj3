@@ -34,9 +34,7 @@ contract RockPaperScissors {
     address bob;
     bytes32 bobBetHash;
     RpsBet aliceBet;
-    bytes32 aliceBetNonce;
     RpsBet bobBet;
-    bytes32 bobBetNonce;
     uint256 aliceReward;
     uint256 bobReward;
   }
@@ -117,13 +115,11 @@ contract RockPaperScissors {
       require(game.aliceBet == RpsBet.Null); // do not accept bet/nonce deposit for 2nd time
       require(aliceBetHash == _betHash); // hash must match
       game.aliceBet = bet;
-      game.aliceBetNonce = betNonce;
       LogBetNonce(aliceBetHash, game.alice, bet, betNonce);
     } else {
       require(game.bobBet == RpsBet.Null); // do not accept bet/nonce deposit for 2nd time
       require(game.bobBetHash == _betHash); // hash must match
       game.bobBet = bet;
-      game.bobBetNonce = betNonce;
       LogBetNonce(aliceBetHash, game.bob, bet, betNonce);
     }
 
