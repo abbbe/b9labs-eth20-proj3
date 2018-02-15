@@ -147,9 +147,7 @@ contract RockPaperScissors {
 
       if (aliceWon) {
         aliceReward = 2 * betAmount;
-        bobReward = 0;
       } else {
-        aliceReward = 0;
         bobReward = 2 * betAmount;
       }
     }
