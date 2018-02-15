@@ -78,11 +78,13 @@ contract('RockPaperScissors', function (accounts) {
     });
 
     it("should accept with 1 day duration", function () {
-      return rps.newChallenge(aliceBetHash, ONE_DAY, { from: alice, value: 1, gas: 3000000 });
+      return rps.newChallenge(aliceBetHash, ONE_DAY, { from: alice, value: 1, gas: 3000000 })
+        .then(txObj => assert.strictEqual(txObj.receipt.status, 1));
     });
 
     it("should accept with exactly 1 year duration", function () {
-      return rps.newChallenge(aliceBetHash, ONE_YEAR, { from: alice, value: 1, gas: 3000000 });
+      return rps.newChallenge(aliceBetHash, ONE_YEAR, { from: alice, value: 1, gas: 3000000 })
+        .then(txObj => assert.strictEqual(txObj.receipt.status, 1));
     });
 
     it("should reject with 1 year and 1 second duration", function () {
@@ -96,6 +98,7 @@ contract('RockPaperScissors', function (accounts) {
       return rps.newChallenge(aliceBetHash, ONE_DAY, { from: alice, value: 1001, gas: 3000000 })
         .then(_txObject => {
           txObject = _txObject;
+          assert.strictEqual(txObject.receipt.status, 1);
           return web3.eth.getBlockPromise(txObject.receipt.blockNumber);
         })
         .then(block => {
@@ -112,6 +115,7 @@ contract('RockPaperScissors', function (accounts) {
     it("should consume 86k gas", function () {
       return rps.newChallenge(aliceBetHash, ONE_DAY, { from: alice, value: 1, gas: 3000000 })
         .then(txObject => {
+          assert.strictEqual(txObject.receipt.status, 1);
           assert.isAtLeast(txObject.receipt.gasUsed, "86000");
           assert.isAtMost(txObject.receipt.gasUsed, "88000");
         });
@@ -119,6 +123,7 @@ contract('RockPaperScissors', function (accounts) {
 
     it("should keep Weis in contract", function () {
       return rps.newChallenge(aliceBetHash, ONE_DAY, { from: alice, value: 1001, gas: 3000000 })
+        .then(txObject => { assert.strictEqual(txObject.receipt.status, 1); return txObject; })
         .then(txObject => web3.eth.getBalancePromise(rps.address))
         .then(balance => assert.strictEqual(balance.toString(10), "1001"));
     });
@@ -134,6 +139,7 @@ contract('RockPaperScissors', function (accounts) {
         .then(() => rps.newChallenge(aliceBetHash, ONE_DAY, { from: alice, value: 1001, gas: 3000000 }))
         .then(_txObject => {
           txObject = _txObject;
+          assert.strictEqual(txObject.receipt.status, 1);
           return web3.eth.getBlockPromise(txObject.receipt.blockNumber);
         })
         .then(_block => {
@@ -153,7 +159,8 @@ contract('RockPaperScissors', function (accounts) {
 
       beforeEach("new from bob", function () {
         // console.log("**** newChallenge - bob ***")
-        return rps.newChallenge(bobBetHash, ONE_DAY, { from: bob, value: 1001, gas: 3000000 });
+        return rps.newChallenge(bobBetHash, ONE_DAY, { from: bob, value: 1001, gas: 3000000 })
+          .then(txObject => assert.strictEqual(txObject.receipt.status, 1));
       });
 
       it("should reject existing hash with same parameters", function () {
@@ -179,6 +186,7 @@ contract('RockPaperScissors', function (accounts) {
         return rps.newChallenge(bobBetHash2, ONE_DAY, { from: alice, value: 1001, gas: 3000000 })
           .then(_txObject => {
             txObject = _txObject;
+            assert.strictEqual(txObject.receipt.status, 1);
             return web3.eth.getBlockPromise(txObject.receipt.blockNumber);
           })
           .then(block => {
@@ -194,6 +202,7 @@ contract('RockPaperScissors', function (accounts) {
 
       it("should keep Weis in contract on second deposit with different hash", function () {
         return rps.newChallenge(bobBetHash2, ONE_DAY, { from: bob, value: 2002, gas: 3000000 })
+          .then(txObject => assert.strictEqual(txObject.receipt.status, 1))
           .then(txObject => web3.eth.getBalancePromise(rps.address))
           .then(balance => assert.strictEqual(balance.toString(10), "3003"));
       });
@@ -208,6 +217,7 @@ contract('RockPaperScissors', function (accounts) {
           .then(() => rps.newChallenge(bobBetHash2, ONE_DAY, { from: bob, value: 1001, gas: 3000000 }))
           .then(_txObject => {
             txObject = _txObject;
+            assert.strictEqual(txObject.receipt.status, 1);
             return web3.eth.getBlockPromise(txObject.receipt.blockNumber);
           })
           .then(block => rps.games(bobBetHash2)
@@ -245,7 +255,8 @@ contract('RockPaperScissors', function (accounts) {
     describe("accept challenge", function () {
       beforeEach("new from alice", function () {
         // console.log("**** newChallenge - alice ***")
-        return rps.newChallenge(aliceBetHash, ONE_DAY, { from: alice, value: 1234, gas: 3000000 });
+        return rps.newChallenge(aliceBetHash, ONE_DAY, { from: alice, value: 1234, gas: 3000000 })
+          .then(txObject => assert.strictEqual(txObject.receipt.status, 1));
       });
 
       it("should reject mismatched amount", function () {
@@ -261,13 +272,15 @@ contract('RockPaperScissors', function (accounts) {
       });
 
       it("should accept matched amount", function () {
-        return rps.acceptChallenge(aliceBetHash, bobBetHash, { from: bob, value: 1234 });
+        return rps.acceptChallenge(aliceBetHash, bobBetHash, { from: bob, value: 1234 })
+          .then(txObject => assert.strictEqual(txObject.receipt.status, 1));
       });
 
       describe("deposit bet/nonce", function () {
         beforeEach("accept from bob", function () {
           // console.log("**** acceptChallenge - bob ***")
-          return rps.acceptChallenge(aliceBetHash, bobBetHash, { from: bob, value: 1234 });
+          return rps.acceptChallenge(aliceBetHash, bobBetHash, { from: bob, value: 1234 })
+            .then(txObject => assert.strictEqual(txObject.receipt.status, 1));
         });
 
         it("should reject valid bet/nonce from other people", function () {
@@ -283,11 +296,13 @@ contract('RockPaperScissors', function (accounts) {
         });
 
         it("should accept valid bet/nonce from alice", function () {
-          return rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice });
+          return rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice })
+            .then(txObject => assert.strictEqual(txObject.receipt.status, 1));
         });
 
         it("should emit a single event on accepting valid bet/nonce from alice", function () {
           return rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice }).then(txObject => {
+            assert.strictEqual(txObject.receipt.status, 1);
             assert.strictEqual(txObject.logs.length, 1);
             assert.strictEqual(txObject.logs[0].event, "LogBetNonce");
             assert.strictEqual(txObject.logs[0].args.aliceBetHash, aliceBetHash, 'hash mismatch');
@@ -299,6 +314,7 @@ contract('RockPaperScissors', function (accounts) {
 
         it("should reject bet/nonce from alice 2nd time", function () {
           return rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice })
+            .then(txObject => assert.strictEqual(txObject.receipt.status, 1))
             .then(() => expectedException(
               () => rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice, gas: 3000000 }),
               3000000
@@ -306,11 +322,13 @@ contract('RockPaperScissors', function (accounts) {
         });
 
         it("should accept valid bet/nonce from bob", function () {
-          return rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob });
+          return rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob })
+            .then(txObject => assert.strictEqual(txObject.receipt.status, 1));
         });
 
         it("should emit a single event on accepting valid bet/nonce from bob", function () {
           return rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob }).then(txObject => {
+            assert.strictEqual(txObject.receipt.status, 1);
             assert.strictEqual(txObject.logs.length, 1);
             assert.strictEqual(txObject.logs[0].event, "LogBetNonce");
             assert.strictEqual(txObject.logs[0].args.aliceBetHash, aliceBetHash, 'hash mismatch');
@@ -322,8 +340,10 @@ contract('RockPaperScissors', function (accounts) {
 
         it("should emit additional event if both players submitted valid bet/nonce", function () {
           return rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice })
+            .then(txObject => assert.strictEqual(txObject.receipt.status, 1))
             .then(() => rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob }))
             .then(txObject => {
+              assert.strictEqual(txObject.receipt.status, 1);
               assert.strictEqual(txObject.logs.length, 2);
               assert.strictEqual(txObject.logs[0].event, "LogBetNonce");
               assert.strictEqual(txObject.logs[0].args.aliceBetHash, aliceBetHash, 'hash mismatch');
@@ -339,6 +359,7 @@ contract('RockPaperScissors', function (accounts) {
 
         it("should reject bet/nonce from bob 2nd time", function () {
           return rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob })
+            .then(txObject => assert.strictEqual(txObject.receipt.status, 1))
             .then(() => expectedException(
               () => rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob, gas: 3000000 }),
               3000000));
@@ -353,7 +374,9 @@ contract('RockPaperScissors', function (accounts) {
             // console.log("**** depositBetNonce - alice ***");
             // console.log("**** depositBetNonce - bob ***");
             return rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice })
-              .then(() => rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob }));
+              .then(txObject => assert.strictEqual(txObject.receipt.status, 1))
+              .then(() => rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob }))
+              .then(txObject => assert.strictEqual(txObject.receipt.status, 1));
           });
 
           it("should reject claim from carol - 3rd party", function () {
@@ -373,7 +396,8 @@ contract('RockPaperScissors', function (accounts) {
             return web3.eth.getBalancePromise(rps.address)
               .then(_balance => {
                 balance0 = _balance;
-                return rps.claim(aliceBetHash, { from: bob });
+                return rps.claim(aliceBetHash, { from: bob })
+                  .then(txObject => assert.strictEqual(txObject.receipt.status, 1));
               })
               .then(txObject => web3.eth.getBalancePromise(rps.address))
               .then(balance => assert.strictEqual(balance.minus(balance0).toString(10), "-2468"));
@@ -382,6 +406,7 @@ contract('RockPaperScissors', function (accounts) {
           it("should emit a single event on bob's claim", function () {
             return rps.claim(aliceBetHash, { from: bob })
               .then(txObject => {
+                assert.strictEqual(txObject.receipt.status, 1);
                 assert.strictEqual(txObject.logs.length, 1);
                 assert.strictEqual(txObject.logs[0].event, "LogClaim");
                 assert.strictEqual(txObject.logs[0].args.aliceBetHash, aliceBetHash, 'hash mismatch');
@@ -392,6 +417,7 @@ contract('RockPaperScissors', function (accounts) {
 
           it("should reject 2nd claim from bob", function () {
             return rps.claim(aliceBetHash, { from: bob })
+              .then(txObject => assert.strictEqual(txObject.receipt.status, 1))
               .then(() => expectedException(
                 () => rps.claim(aliceBetHash, { from: bob, gas: 3000000 }),
                 3000000));
