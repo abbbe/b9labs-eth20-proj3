@@ -107,8 +107,10 @@ contract RockPaperScissors {
     // only accept bet/nonce from alice and bob
     require(msg.sender == game.alice || msg.sender == game.bob);
 
-    // make sure valid bet value, calculate hash
+    // make sure valid bet value
     require(bet == RpsBet.Rock || bet == RpsBet.Paper || bet == RpsBet.Scissors);
+
+    // calculate hash
     bytes32 _betHash = hashThat(bet, betNonce);
 
     if (msg.sender == game.alice) {
@@ -123,18 +125,19 @@ contract RockPaperScissors {
       LogBetNonce(aliceBetHash, msg.sender, bet, betNonce);
     }
 
-    if (game.aliceBet != RpsBet.Null && game.bobBet != RpsBet.Null) {
-      (game.aliceReward, game.bobReward) = _calculateRewards(game.aliceBet, game.bobBet, game.amount);
-      LogRewards(aliceBetHash, game.aliceReward, game.bobReward);
+    // use in-memory copy for bet values
+    RpsBet aliceBet = game.aliceBet;
+    RpsBet bobBet = game.bobBet;
+    if (aliceBet == RpsBet.Null || bobBet == RpsBet.Null) {
+      return;
     }
-  }
 
-  function _calculateRewards(RpsBet aliceBet, RpsBet bobBet, uint256 betAmount) public pure returns (uint256 aliceReward, uint256 bobReward) {
-    // we have everything to figure out who won
+    // we have everything to figure out who has won
+    uint256 aliceReward;
+    uint256 bobReward;
     if (aliceBet == bobBet) {
       // tie
-      aliceReward = betAmount;
-      bobReward = betAmount;
+      aliceReward = bobReward = game.amount;
     } else {
       bool aliceWon = true;
       if (aliceBet == RpsBet.Rock && bobBet == RpsBet.Paper) {
@@ -146,11 +149,15 @@ contract RockPaperScissors {
       } // else - Alice won
 
       if (aliceWon) {
-        aliceReward = 2 * betAmount;
+        aliceReward = 2 * game.amount;
       } else {
-        bobReward = 2 * betAmount;
+        bobReward = 2 * game.amount;
       }
     }
+
+    game.aliceReward = aliceReward;
+    game.bobReward = bobReward;
+    LogRewards(aliceBetHash, aliceReward, bobReward);
   }
 
   /*
