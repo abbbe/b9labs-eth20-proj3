@@ -173,6 +173,7 @@ contract RockPaperScissors {
 
     if (block.timestamp > game.deadline && game.deadline != 0) {
       // deadline has passed, one or both bets were not revealed (otherwise .deadline would be zeroed)
+      game.deadline = 0;
 
       if (game.bob == 0) {
         // challenge has expired, bob has not accepted, let alice withdraw her funds
@@ -187,9 +188,8 @@ contract RockPaperScissors {
         // both players have failed to reveal their bets, let both withdraw their funds
         game.aliceReward = game.bobReward = game.amount;
       } else {
-        revert(); // should never happen
+        assert(false); // should never happen
       }
-      game.deadline = 0;
     }
 
     // by now players' rewards are settled
