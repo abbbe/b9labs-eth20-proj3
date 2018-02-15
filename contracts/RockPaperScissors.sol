@@ -115,12 +115,12 @@ contract RockPaperScissors {
       require(game.aliceBet == RpsBet.Null); // do not accept bet/nonce deposit for 2nd time
       require(aliceBetHash == _betHash); // hash must match
       game.aliceBet = bet;
-      LogBetNonce(aliceBetHash, game.alice, bet, betNonce);
+      LogBetNonce(aliceBetHash, msg.sender, bet, betNonce);
     } else {
       require(game.bobBet == RpsBet.Null); // do not accept bet/nonce deposit for 2nd time
       require(game.bobBetHash == _betHash); // hash must match
       game.bobBet = bet;
-      LogBetNonce(aliceBetHash, game.bob, bet, betNonce);
+      LogBetNonce(aliceBetHash, msg.sender, bet, betNonce);
     }
 
     if (game.aliceBet != RpsBet.Null && game.bobBet != RpsBet.Null) {
