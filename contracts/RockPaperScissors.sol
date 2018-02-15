@@ -61,7 +61,7 @@ contract RockPaperScissors {
    *   - timeout    = Time (in blocks) Bob has accept Alice's challenge.
    *   - msg.value  = Amount to bet. Bob must match it when calling acceptChallenge().
    */
-  function newChallenge(bytes32 betHash, uint timeout) public payable {
+  function newChallenge(bytes32 betHash, uint timeout) external payable {
     require(msg.value > 0);
     require(timeout >= ONE_DAY);
     require(timeout <= ONE_YEAR);
@@ -82,7 +82,7 @@ contract RockPaperScissors {
    *   - aliceBetHash  = hash of Alice's game
    *   - bobBetHash    = Bob's hash
    */
-  function acceptChallenge(bytes32 aliceBetHash, bytes32 bobBetHash) public payable {
+  function acceptChallenge(bytes32 aliceBetHash, bytes32 bobBetHash) external payable {
     Game storage game = games[aliceBetHash];
     require(msg.sender != game.alice); // can't play with yourself
     require(msg.value == game.amount); // exact amount please, we don't have change, sorry
@@ -98,7 +98,7 @@ contract RockPaperScissors {
    * Alice and Bob call depositBetNonce() to deposit their bets and nonces.
    * After one player calls this method, another player must do the same before timeout or loose.
    */
-  function depositBetNonce(bytes32 aliceBetHash, RpsBet bet, bytes32 betNonce) public {
+  function depositBetNonce(bytes32 aliceBetHash, RpsBet bet, bytes32 betNonce) external {
     Game storage game = games[aliceBetHash];
 
     // do not accept bet/nonce deposit until both players submitted their hashes
@@ -163,7 +163,7 @@ contract RockPaperScissors {
   /*
    * Alice calls this function to get her money back if her challenge was not accepted.
    */
-  function withdraw(bytes32 aliceBetHash) public {
+  function withdraw(bytes32 aliceBetHash) external {
     Game storage game = games[aliceBetHash];
 
     if (msg.sender == game.alice && game.bob == 0 && block.timestamp > game.lastMatchTime) {
@@ -180,7 +180,7 @@ contract RockPaperScissors {
   /*
    * Winning player must call claim() to get their reward.
    */
-  function claim(bytes32 aliceBetHash) public {
+  function claim(bytes32 aliceBetHash) external {
     Game storage game = games[aliceBetHash];
     uint256 reward;
 
