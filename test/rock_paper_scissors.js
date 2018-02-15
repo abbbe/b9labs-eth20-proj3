@@ -250,13 +250,13 @@ contract('RockPaperScissors', function (accounts) {
 
       it("should reject mismatched amount", function () {
         return expectedException(
-          () => rps.acceptChallenge(aliceBetHash, bobBetHash, { from: bob, value: 4321 }),
+          () => rps.acceptChallenge(aliceBetHash, bobBetHash, { from: bob, value: 4321, gas: 3000000 }),
           3000000);
       });
 
       it("should reject alice even with matching amount", function () {
         return expectedException(
-          () => rps.acceptChallenge(aliceBetHash, bobBetHash, { from: alice, value: 1234 }),
+          () => rps.acceptChallenge(aliceBetHash, bobBetHash, { from: alice, value: 1234, gas: 3000000 }),
           3000000);
       });
 
@@ -272,13 +272,13 @@ contract('RockPaperScissors', function (accounts) {
 
         it("should reject valid bet/nonce from other people", function () {
           return expectedException(
-            () => rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: carol }),
+            () => rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: carol, gas: 3000000 }),
             3000000);
         });
 
         it("should reject invalid bet/nonce", function () {
           return expectedException(
-            () => rps.depositBetNonce(aliceBetHash, bobBet2, bobBetNonce, { from: bob }),
+            () => rps.depositBetNonce(aliceBetHash, bobBet2, bobBetNonce, { from: bob, gas: 3000000 }),
             3000000);
         });
 
@@ -300,7 +300,8 @@ contract('RockPaperScissors', function (accounts) {
         it("should reject bet/nonce from alice 2nd time", function () {
           return rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice })
             .then(() => expectedException(
-              () => rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice })
+              () => rps.depositBetNonce(aliceBetHash, aliceBet, aliceBetNonce, { from: alice, gas: 3000000 }),
+              3000000
             ));
         });
 
@@ -357,13 +358,13 @@ contract('RockPaperScissors', function (accounts) {
 
           it("should reject claim from carol - 3rd party", function () {
             return expectedException(
-              () => rps.claim(aliceBetHash, { from: carol }),
+              () => rps.claim(aliceBetHash, { from: carol, gas: 3000000 }),
               3000000);
           });
 
           it("should reject claim from alice - the looser", function () {
             return expectedException(
-              () => rps.claim(aliceBetHash, { from: alice }),
+              () => rps.claim(aliceBetHash, { from: alice, gas: 3000000 }),
               3000000);
           });
 
@@ -392,7 +393,7 @@ contract('RockPaperScissors', function (accounts) {
           it("should reject 2nd claim from bob", function () {
             return rps.claim(aliceBetHash, { from: bob })
               .then(() => expectedException(
-                () => rps.claim(aliceBetHash, { from: bob }),
+                () => rps.claim(aliceBetHash, { from: bob, gas: 3000000 }),
                 3000000));
           });
         });
