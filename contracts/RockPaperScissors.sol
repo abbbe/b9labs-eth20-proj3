@@ -185,12 +185,12 @@ contract RockPaperScissors {
     uint256 reward;
 
     if (msg.sender == game.alice) {
-      require(game.aliceReward > 0);
       reward = game.aliceReward;
+      require(reward > 0);
       game.aliceReward = 0;
     } else if (msg.sender == game.bob) {
-      require(game.bobReward > 0);
       reward = game.bobReward;
+      require(reward > 0);
       game.bobReward = 0;
     } else {
       revert();
