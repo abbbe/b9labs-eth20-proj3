@@ -23,14 +23,15 @@ pragma solidity ^0.4.18;
 
 contract RockPaperScissors {
   uint constant ONE_DAY = 86400;
+  uint constant ONE_WEEK = 7 * 86400;
   uint constant ONE_YEAR = 365 * 86400;
 
   enum RpsBet { Null, Rock, Paper, Scissors }
 
   struct Game {
     address alice;
-    uint amount;
-    uint lastMatchTime;
+    uint amount; // bet amount per player, reset to zero after withdraw/claim
+    uint deadline;
     address bob;
     bytes32 bobBetHash;
     RpsBet aliceBet;
@@ -41,7 +42,7 @@ contract RockPaperScissors {
 
   mapping (bytes32 => Game) public games;
 
-  event LogChallenge(address indexed alice, bytes32 indexed aliceBetHash, uint amount, uint lastMatchTime);
+  event LogChallenge(address indexed alice, bytes32 indexed aliceBetHash, uint amount, uint deadline);
   event LogChallengeAccepted(bytes32 indexed aliceBetHash, address indexed bob, bytes32 bobBetHash);
   event LogBetNonce(bytes32 indexed aliceBetHash, address player, RpsBet bet, bytes32 betNonce);
   event LogRewards(bytes32 indexed aliceBetHash, uint256 aliceReward, uint256 bobReward);
@@ -69,12 +70,12 @@ contract RockPaperScissors {
     Game storage game = games[betHash];
     require(game.alice == 0);
 
-    uint lastMatchTime = block.timestamp + timeout;
+    uint deadline = block.timestamp + timeout;
     game.alice = msg.sender;
     game.amount = msg.value;
-    game.lastMatchTime = lastMatchTime;
+    game.deadline = deadline;
 
-    LogChallenge(msg.sender, betHash, msg.value, lastMatchTime);
+    LogChallenge(msg.sender, betHash, msg.value, deadline);
   }
 
   /*
@@ -87,10 +88,11 @@ contract RockPaperScissors {
     require(msg.sender != game.alice); // can't play with yourself
     require(msg.value == game.amount); // exact amount please, we don't have change, sorry
     require(game.bob == 0); // can't accept challenge which was accepted already
-    require(block.timestamp <= game.lastMatchTime); // check challenge has not expired
+    require(block.timestamp <= game.deadline); // check challenge has not expired
 
     game.bob = msg.sender;
     game.bobBetHash = bobBetHash;
+    game.deadline = block.timestamp + ONE_WEEK;
     LogChallengeAccepted(aliceBetHash, msg.sender, bobBetHash);
   }
 
@@ -100,6 +102,8 @@ contract RockPaperScissors {
    */
   function depositBetNonce(bytes32 aliceBetHash, RpsBet bet, bytes32 betNonce) external {
     Game storage game = games[aliceBetHash];
+
+    require(block.timestamp <= game.deadline); // check challenge has not expired
 
     // do not accept bet/nonce deposit until both players submitted their hashes
     require(game.bobBetHash != 0);
@@ -165,16 +169,23 @@ contract RockPaperScissors {
    */
   function withdraw(bytes32 aliceBetHash) external {
     Game storage game = games[aliceBetHash];
+    uint256 amount = game.amount;
+    require(amount > 0);
+    require(block.timestamp > game.deadline);
 
-    if (msg.sender == game.alice && game.bob == 0 && block.timestamp > game.lastMatchTime) {
-      // challenge has expired, refund alice
-      uint256 amount = game.amount;
-      game.amount = 0;
-      LogWithdraw(aliceBetHash, msg.sender, amount);
-      msg.sender.transfer(amount);
+    if (msg.sender == game.alice && game.bob == 0) {
+      // challenge has expired, bob has not accepted, let alice withdraw everything
+    } else if (msg.sender == game.alice && game.aliceBet != RpsBet.Null && game.bobBet == RpsBet.Null) {
+      // bob has failed to revel his bet, let alice withdraw everything
+    } else if (msg.sender == game.bob && game.bobBet != RpsBet.Null && game.aliceBet == RpsBet.Null) {
+      // alice has failed to revel his bet, let bob withdraw everything
     } else {
-      throw; // TODO: implement withdraw on depositBetHash-timeout
+      revert();
     }
+
+    game.amount = 0;
+    LogWithdraw(aliceBetHash, msg.sender, amount);
+    msg.sender.transfer(amount);
   }
 
   /*

@@ -107,7 +107,7 @@ contract('RockPaperScissors', function (accounts) {
           assert.strictEqual(txObject.logs[0].args.alice, alice);
           assert.strictEqual(txObject.logs[0].args.amount.toString(10), "1001");
           assert.strictEqual(
-            txObject.logs[0].args.lastMatchTime.toString(10),
+            txObject.logs[0].args.deadline.toString(10),
             web3.toBigNumber(ONE_DAY).plus(block.timestamp).toString(10));
         });
     });
@@ -131,10 +131,10 @@ contract('RockPaperScissors', function (accounts) {
     it("should update games[]", function () {
       var _txObject, block;
       return rps.games(aliceBetHash)
-        .then(([sender, amount, lastMatchTime]) => {
+        .then(([sender, amount, deadline]) => {
           assert.strictEqual(sender, address0);
           assert.strictEqual(amount.toString(10), "0");
-          assert.strictEqual(lastMatchTime.toString(10), "0");
+          assert.strictEqual(deadline.toString(10), "0");
         })
         .then(() => rps.newChallenge(aliceBetHash, ONE_DAY, { from: alice, value: 1001, gas: 3000000 }))
         .then(_txObject => {
@@ -146,11 +146,11 @@ contract('RockPaperScissors', function (accounts) {
           block = _block;
           return rps.games(aliceBetHash);
         })
-        .then(([sender, amount, lastMatchTime]) => {
+        .then(([sender, amount, deadline]) => {
           assert.strictEqual(sender, alice);
           assert.strictEqual(amount.toString(10), "1001");
           assert.strictEqual(
-            lastMatchTime.toString(10),
+            deadline.toString(10),
             web3.toBigNumber(ONE_DAY).plus(block.timestamp).toString(10));
         });
     });
@@ -195,7 +195,7 @@ contract('RockPaperScissors', function (accounts) {
             assert.strictEqual(txObject.logs[0].args.alice, alice);
             assert.strictEqual(txObject.logs[0].args.amount.toString(10), "1001");
             assert.strictEqual(
-              txObject.logs[0].args.lastMatchTime.toString(10),
+              txObject.logs[0].args.deadline.toString(10),
               web3.toBigNumber(ONE_DAY).plus(block.timestamp).toString(10));
           });
       });
@@ -209,10 +209,10 @@ contract('RockPaperScissors', function (accounts) {
 
       it("should update games[] on second deposit with different hash", function () {
         return rps.games(bobBetHash2)
-          .then(([sender, amount, lastMatchTime]) => {
+          .then(([sender, amount, deadline]) => {
             assert.strictEqual(sender, address0);
             assert.strictEqual(amount.toString(10), "0");
-            assert.strictEqual(lastMatchTime.toString(10), "0");
+            assert.strictEqual(deadline.toString(10), "0");
           })
           .then(() => rps.newChallenge(bobBetHash2, ONE_DAY, { from: bob, value: 1001, gas: 3000000 }))
           .then(_txObject => {
@@ -221,11 +221,11 @@ contract('RockPaperScissors', function (accounts) {
             return web3.eth.getBlockPromise(txObject.receipt.blockNumber);
           })
           .then(block => rps.games(bobBetHash2)
-            .then(([sender, amount, lastMatchTime]) => {
+            .then(([sender, amount, deadline]) => {
               assert.strictEqual(sender, bob);
               assert.strictEqual(amount.toString(10), "1001");
               assert.strictEqual(
-                lastMatchTime.toString(10),
+                deadline.toString(10),
                 web3.toBigNumber(ONE_DAY).plus(block.timestamp).toString(10));
             })
           );
@@ -357,6 +357,8 @@ contract('RockPaperScissors', function (accounts) {
             });
         });
 
+       // console.log(bob); for(;;);
+
         it("should reject bet/nonce from bob 2nd time", function () {
           return rps.depositBetNonce(aliceBetHash, bobBet, bobBetNonce, { from: bob })
             .then(txObject => assert.strictEqual(txObject.receipt.status, 1))
@@ -365,9 +367,38 @@ contract('RockPaperScissors', function (accounts) {
               3000000));
         });
 
-        it("should reject withdrawal before timeout");
+        [ONE_DAY, (ONE_DAY + 1)].forEach(elapsed => {
+          [alice, bob].forEach(who => {
+            it(`should reject withdraw if nobody revealed their bet (elapsed=${elapsed}, who=${who})`, function () {
+              return increaseTime(ONE_DAY + 1)
+                .then(() => expectedException(
+                  () => rps.withdraw(bobBetHash, { from: who, gas: 3000000 }),
+                  3000000));
+            });
+          })
+        });
 
-        it("should allow withdrawal after timeout");
+        // describe("timeout", function () {
+        //   it("should reject withdrawal before timeout", function () {
+        //     return increaseTime(ONE_DAY)
+        //       .then(() => expectedException(
+        //         () => rps.withdraw(bobBetHash, { from: bob, gas: 3000000 }),
+        //         3000000));
+        //   });
+
+        //   it("should allow 1st player withdraw after timeout", function () {
+        //     return increaseTime(ONE_DAY + 1)
+        //       .then(() => measure.measureTx([rps.address, bob], rps.withdraw(bobBetHash, { from: bob })))
+        //       .then(m => measure.assertStrs10Equal(m.diff, [-1001, -m.cost + 1001]));
+        //   });
+
+        //   it("should reject withdraw by others even after timeout", function () {
+        //     return increaseTime(ONE_DAY + 1)
+        //       .then(() => expectedException(
+        //         () => rps.withdraw(bobBetHash, { from: alice, gas: 3000000 }),
+        //         3000000));
+        //   });
+        // });
 
         describe("reward", function () {
           beforeEach("accept from bob", function () {
